@@ -19,6 +19,20 @@ let svg = d3.select('#chart-area')
 let g = svg.append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`)
 
+g.append('text')
+    .attr('x', (group.width / 2))
+    .attr('y', group.height + 50)
+    .attr('text-anchor', 'middle')
+    .text('Month')
+
+
+g.append('text')
+    .attr('x', -(group.height / 2))
+    .attr('y', -(margin.left / 2 + 20))
+    .attr('transform', 'rotate(-90)')
+    .attr('text-anchor', 'middle')
+    .text('Revenue') 
+
 d3.json('../data/revenues.json').then( data => {
     // Transform revenue data
     data.forEach(d => d.revenue = +d.revenue)
@@ -57,5 +71,9 @@ d3.json('../data/revenues.json').then( data => {
         .attr('height', d => group.height - scaleY(d.revenue))
         .attr('fill', 'orange')
 
-    console.log(data)
+    // d3.interval( () => {
+    //     console.log('hello')
+    // }, 1000)
+
+    // console.log(data)
 })
