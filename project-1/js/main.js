@@ -95,32 +95,29 @@ function update(data) {
     yLabel.transition(t).text(label)
 
     // JOIN new data with old elements
-    let rects = g.selectAll('rect')
+    let rects = g.selectAll('circle')
         .data(data, d => d.month)
     
     // EXIT (remove) old elements not present in new data
     rects.exit()
         .attr('fill', 'red')
         .transition(t)
-            .attr('y', yScale(0))
+            .attr('cy', yScale(0))
             .attr('height', 0)
             .remove()
         
     // ENTER new elements present in new data
     rects.enter()
-        .append('rect')
+        .append('circle')
         .attr('fill', 'grey')
-        .attr('y', yScale(0))
-        .attr('height', 0)
-        .attr('x', d => xScale(d.month))
-        .attr('width', xScale.bandwidth)
+        .attr('cy', yScale(0))
+        .attr('cx', d => xScale(d.month) )
+        .attr('r', 5)
         // AND UPDATE old elements present in new data
         .merge(rects)
         .transition(t)
-            .attr('x', d => xScale(d.month))
-            .attr('y', d => yScale(d[val]))
-            .attr('width', xScale.bandwidth)
-            .attr('height', d => group.height - yScale(d[val]))
+            .attr('cx', d => xScale(d.month))
+            .attr('cy', d => yScale(d[val]))
 
     console.log(rects)
 
