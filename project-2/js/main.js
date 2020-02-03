@@ -22,7 +22,7 @@ let g = d3.select('#chart-area')
 // Scales
 let x = d3.scaleLog()
 	.base(10)	
-	.domain([100, 170000])
+	.domain([142, 150000])
 	.range([0, plot.width])
 let y = d3.scaleLinear()
 	.domain([0,90])
@@ -74,17 +74,10 @@ d3.json("data/data.json").then(function(data){
 		})
 	})
 
-	// Get data for first year (1800) in data set
-	// Year 1800, GDP: min = 350, max = 4235
-	// Year 1800, Life exp: min = 23.39, max = 42.85	
-	// let firstYr = data.shift()
-	// let firstYrData = firstYr.countries.filter(country => {
-	// 	return country.income != null && country.life_exp != null
-	// })
-
 	let year = 0
 
 	d3.interval( () => {
+		// Play on loop
 		if (!data[year]) {
 			year = 0
 		} 
@@ -92,9 +85,6 @@ d3.json("data/data.json").then(function(data){
 		timeLabel.text(data[year]['year'])
 		year++
 	}, 300)
-
-	// update(firstYrData)
-	
 })
 
 function update(data) {
