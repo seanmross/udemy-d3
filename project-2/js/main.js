@@ -22,11 +22,14 @@ let g = d3.select('#chart-area')
 // Scales
 let x = d3.scaleLog()
 	.base(10)	
-	.domain([300, 150000])
+	.domain([100, 170000])
 	.range([0, plot.width])
 let y = d3.scaleLinear()
 	.domain([0,90])
 	.range([plot.height, 0])
+let area = d3.scaleLinear()
+	.domain([2000, 1400000000])
+	.range([25*Math.PI, 1500*Math.PI])
 
 // Axis
 let xAxis = d3.axisBottom(x)
@@ -59,32 +62,59 @@ let timeLabel = g.append("text")
 	.attr("font-size", "40px")
 	.attr("opacity", "0.4")
 	.attr("text-anchor", "middle")
-	.text("1800");
+
+// Transition for updating elements
+const t = d3.transition().duration(100)
 
 d3.json("data/data.json").then(function(data){	
 	// Filter null values
-	// data.forEach( year => {
-	// 	year.countries = year.countries.filter(country => {
-	// 		return country.income != null && country.life_exp != null
-	// 	})
-	// })
+	data.forEach( year => {
+		year.countries = year.countries.filter(country => {
+			return country.income != null && country.life_exp != null
+		})
+	})
 
 	// Get data for first year (1800) in data set
 	// Year 1800, GDP: min = 350, max = 4235
 	// Year 1800, Life exp: min = 23.39, max = 42.85	
-	let firstYr = data.shift()
-	let firstYrData = firstYr.countries.filter(country => {
-		return country.income != null && country.life_exp != null
-	})
+	// let firstYr = data.shift()
+	// let firstYrData = firstYr.countries.filter(country => {
+	// 	return country.income != null && country.life_exp != null
+	// })
 
+	let year = 0
+
+	d3.interval( () => {
+		if (!data[year]) {
+			year = 0
+		} 
+		update(data[year]['countries'])
+		timeLabel.text(data[year]['year'])
+		year++
+	}, 300)
+
+	// update(firstYrData)
+	
+})
+
+function update(data) {
+	// JOIN new data with old elements
 	let circles = g.selectAll('circle')
-		.data(firstYrData, d => d.country)
+		.data(data, d => d.country)
+
+	// EXIT (remove) old elements not present in new data
+	circles.exit()
+		.remove()
+
+	// ENTER new elements present in new data
+	circles
 		.enter()
 		.append('circle')
 		.attr('fill', 'grey')
-		.attr('r', 5)
-		.attr('cx', d => x(d.income))
-		.attr('cy', d => y(d.life_exp))
-	
-	console.log(firstYrData);
-})
+		// AND UPDATE old elements present in new data
+		.merge(circles)
+		.transition(t)
+			.attr('r', d=> Math.sqrt(area(d.population) / Math.PI))
+			.attr('cx', d => x(d.income))
+			.attr('cy', d => y(d.life_exp))
+}
