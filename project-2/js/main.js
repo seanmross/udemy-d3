@@ -74,7 +74,6 @@ let legend = g.append('g')
 continents.forEach( (continent, i) => {
 	let row = legend.append('g')
 		.attr('transform', `translate(0, ${i * 20})`)
-
 	row.append('rect')
 		.attr('height', 10)
 		.attr('width', 10)
@@ -98,28 +97,38 @@ let tip = d3.tip()
 			<strong>GDP Per Capita:</strong> <span style='color:red'>${d3.format('$,.0f')(d.income)}</span><br>
 			<strong>Population:</strong> <span style='color:red'>${d3.format(',')(d.population)}</span><br>`
 	})
-g.call(tip)
+g.call(tip);
 
-d3.json("data/data.json").then(function(data){	
+let time = 0;
+let _data, interval;
+
+d3.json("data/data.json").then((data) => {	
 	// Filter null values
-	data.forEach( year => {
+	_data = data.map( year => {
 		year.countries = year.countries.filter(country => {
 			return country.income != null && country.life_exp != null
 		})
+		return year;
 	})
-	
-	let year = 0
 
-	d3.interval( () => {
-		// Play on loop
-		if (!data[year]) {
-			year = 0
-		} 
-		update(data[year]['countries'])
-		timeLabel.text(data[year]['year'])
-		year++
-	}, 300)
+	// Show first year data on page load
+	update(_data[time]['countries'])
 })
+
+$('#play-btn')
+	.on('click', () => {
+		interval = setInterval(step, 300)
+	})
+
+function step() {
+	// Play on loop
+	if (!_data[time]) {
+		time = 0;
+	}
+	update(_data[time]['countries'])
+	timeLabel.text(_data[time]['year'])
+	time++
+}
 
 function update(data) {
 	// JOIN new data with old elements
