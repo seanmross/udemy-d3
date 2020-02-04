@@ -90,12 +90,13 @@ continents.forEach( (continent, i) => {
 
 // Tooltip
 let tip = d3.tip()
+	.attr('class', 'd3-tip')
 	.html( d => {
 		return `<strong>Country:</strong> <span style='color:red'>${d.country}</span><br>
-			<strong>Continent:</strong> <span style='color:red'>${d.continent}</span><br>
-			<strong>Life Expectancy:</strong> <span style='color:red'>${d.life_exp}</span><br>
-			<strong>GDP Per Capita:</strong> <span style='color:red'>${d.income}</span><br>
-			<strong>Population:</strong> <span style='color:red'>${d.population}</span><br>`
+			<strong>Continent:</strong> <span style='color:red;text-transform:capitalize'>${d.continent}</span><br>
+			<strong>Life Expectancy:</strong> <span style='color:red'>${d3.format('.0f')(d.life_exp)}</span><br>
+			<strong>GDP Per Capita:</strong> <span style='color:red'>${d3.format('$,.0f')(d.income)}</span><br>
+			<strong>Population:</strong> <span style='color:red'>${d3.format(',')(d.population)}</span><br>`
 	})
 g.call(tip)
 
