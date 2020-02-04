@@ -30,6 +30,7 @@ let y = d3.scaleLinear()
 let area = d3.scaleLinear()
 	.domain([2000, 1400000000])
 	.range([25*Math.PI, 1500*Math.PI])
+let fill = d3.scaleOrdinal(d3.schemeSet2)
 
 // Axis
 let xAxis = d3.axisBottom(x)
@@ -100,11 +101,11 @@ function update(data) {
 	circles
 		.enter()
 		.append('circle')
-		.attr('fill', 'grey')
 		// AND UPDATE old elements present in new data
 		.merge(circles)
 		.transition(t)
-			.attr('r', d=> Math.sqrt(area(d.population) / Math.PI))
+			.attr('fill', d => fill(d.continent))
+			.attr('r', d => Math.sqrt(area(d.population) / Math.PI))
 			.attr('cx', d => x(d.income))
 			.attr('cy', d => y(d.life_exp))
 }
