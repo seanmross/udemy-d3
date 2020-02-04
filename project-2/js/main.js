@@ -116,8 +116,21 @@ d3.json("data/data.json").then((data) => {
 })
 
 $('#play-btn')
-	.on('click', () => {
-		interval = setInterval(step, 300)
+	.on('click', function(){
+		let btn = $(this);
+		if (btn.text() == 'Play') {
+			btn.text('Pause');
+			interval = setInterval(step, 300);
+		} else {
+			btn.text('Play');
+			clearInterval(interval);
+		}
+	});
+
+$('#reset-btn')
+	.on('click', function(){
+		time = 0;
+		update(_data[time]['countries'])
 	})
 
 function step() {
@@ -125,9 +138,8 @@ function step() {
 	if (!_data[time]) {
 		time = 0;
 	}
-	update(_data[time]['countries'])
-	timeLabel.text(_data[time]['year'])
-	time++
+	update(_data[time]['countries']);
+	time++;
 }
 
 function update(data) {
@@ -152,4 +164,7 @@ function update(data) {
 			.attr('r', d => Math.sqrt(area(d.population) / Math.PI))
 			.attr('cx', d => x(d.income))
 			.attr('cy', d => y(d.life_exp))
+	
+	// Update year label
+	timeLabel.text(_data[time]['year']);
 }
