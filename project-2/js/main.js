@@ -71,7 +71,6 @@ const t = d3.transition().duration(100)
 const continents = ["africa", "americas", "asia", "europe"]
 let legend = g.append('g')
 	.attr('transform', `translate(${plot.width - 10}, ${plot.height - 125})`)
-
 continents.forEach( (continent, i) => {
 	let row = legend.append('g')
 		.attr('transform', `translate(0, ${i * 20})`)
@@ -89,6 +88,16 @@ continents.forEach( (continent, i) => {
 		.text(continent)
 })
 
+// Tooltip
+let tip = d3.tip()
+	.html( d => {
+		return `<strong>Country:</strong> <span style='color:red'>${d.country}</span><br>
+			<strong>Continent:</strong> <span style='color:red'>${d.continent}</span><br>
+			<strong>Life Expectancy:</strong> <span style='color:red'>${d.life_exp}</span><br>
+			<strong>GDP Per Capita:</strong> <span style='color:red'>${d.income}</span><br>
+			<strong>Population:</strong> <span style='color:red'>${d.population}</span><br>`
+	})
+g.call(tip)
 
 d3.json("data/data.json").then(function(data){	
 	// Filter null values
@@ -124,10 +133,12 @@ function update(data) {
 	circles
 		.enter()
 		.append('circle')
+		.attr('fill', d => fill(d.continent))
+		.on('mouseover', tip.show)
+		.on('mouseout', tip.hide)
 		// AND UPDATE old elements present in new data
 		.merge(circles)
 		.transition(t)
-			.attr('fill', d => fill(d.continent))
 			.attr('r', d => Math.sqrt(area(d.population) / Math.PI))
 			.attr('cx', d => x(d.income))
 			.attr('cy', d => y(d.life_exp))
