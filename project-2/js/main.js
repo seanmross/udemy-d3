@@ -64,9 +64,6 @@ let timeLabel = g.append("text")
 	.attr("opacity", "0.4")
 	.attr("text-anchor", "middle")
 
-// Transition for updating elements
-const t = d3.transition().duration(100)
-
 // Legend
 const continents = ["africa", "americas", "asia", "europe"]
 let legend = g.append('g')
@@ -120,7 +117,7 @@ $('#play-btn')
 		let btn = $(this);
 		if (btn.text() == 'Play') {
 			btn.text('Pause');
-			interval = setInterval(step, 300);
+			interval = setInterval(step, 100);
 		} else {
 			btn.text('Play');
 			clearInterval(interval);
@@ -133,6 +130,22 @@ $('#reset-btn')
 		update(_data[time]['countries'])
 	})
 
+$('#continent-select')
+	.on('change', function(){
+		update(_data[time]['countries'])
+	})
+
+$('#slider').slider({
+	min: 1800,
+	max: 2014,
+	step: 1,
+	value: 50,
+	slide: function(event, ui) {
+		time = ui.value - 1800;
+		update(_data[time]['countries'])
+	}
+})
+
 function step() {
 	// Play on loop
 	if (!_data[time]) {
@@ -143,13 +156,28 @@ function step() {
 }
 
 function update(data) {
+	// Transition for updating elements
+	const t = d3.transition().duration(100)
+
+	// Filter by continent selected
+	let continent = $('#continent-select').val()
+	data = data.filter( data => {
+		if (continent == 'all') {
+			return true;
+		} else {
+			return data.continent == continent;
+		}
+	})
+
 	// JOIN new data with old elements
 	let circles = g.selectAll('circle')
 		.data(data, d => d.country)
 
 	// EXIT (remove) old elements not present in new data
 	circles.exit()
-		.remove()
+		.transition(t)
+			.attr('r', 0)
+			.remove()
 
 	// ENTER new elements present in new data
 	circles
@@ -158,6 +186,9 @@ function update(data) {
 		.attr('fill', d => fill(d.continent))
 		.on('mouseover', tip.show)
 		.on('mouseout', tip.hide)
+		.attr('cx', d => x(d.income))
+		.attr('cy', d => y(d.life_exp))
+		.attr('r',  0)
 		// AND UPDATE old elements present in new data
 		.merge(circles)
 		.transition(t)
@@ -167,4 +198,10 @@ function update(data) {
 	
 	// Update year label
 	timeLabel.text(_data[time]['year']);
+
+	// Update slider year label
+	$('#year')[0].innerHTML = +(time + 1800)
+
+	// Update slider position while playing
+	$('#slider').slider('value', +(time + 1800))
 }
