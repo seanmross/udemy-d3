@@ -41,15 +41,15 @@ var xAxisCall = d3.axisBottom()
     .ticks(4)
 var yAxisCall = d3.axisLeft()
     .ticks(6)
-    .tickFormat(function(d) { return formatAbbreviation(d); });
+    // .tickFormat(function(d) { return formatAbbreviation(d); });
 
 // Axis groups
 var xAxis = g.append("g")
-    .attr("transform", "translate(0," + height + ")");
+    .attr("transform", "translate(0," + height + ")")
 var yAxis = g.append("g")
     .attr("class", "y axis")
 
-// Y-Axis label
+// X-Axis label
 let xLabel = g.append("text")
     .attr('x', width / 2)
     .attr("y", height + 50)
@@ -68,53 +68,49 @@ let yLabel = g.append("text")
     .attr("fill", "#5D6971")
     .text("Price (USD))");
 
+let coinData, coin, metric;
 
-let filteredData = {};
+// Configure & add line to chart
+let path = g.append("path")
+    .attr("class", "line")
+    .attr("fill", "none")
+    .attr("stroke", "grey")
+    .attr("stroke-with", "3px")
+
+$('#coin-select')
+    .on('change', function(ev) {
+        coin = ev.target.value;
+        update();
+    })
+
+$('#var-select')
+    .on('change', function(ev) {
+        metric = ev.target.value;
+        update();
+    })
 
 d3.json("data/coins.json").then(function(data) {
     // Data cleaning
     for (let coin in data) {
-        filteredData[coin] = data[coin].filter(d => {
+        data[coin] = data[coin].filter(d => {
             return d['24h_vol'] != null && 
                 d.market_cap != null && 
                 d.price_usd != null;
         })
-        filteredData[coin].forEach(d => {
+        data[coin].forEach(d => {
             d['24h_vol'] = +d['24h_vol'];
             d.date = parseTime(d.date);
             d.market_cap = +d.market_cap;
             d.price_usd = +d.price_usd; 
         })
     }
-
-    // Using only Bitcoin data
-    filteredData = filteredData['bitcoin']
-    // console.log(filteredData)
     
-    // Set scale domains
-    x.domain(d3.extent(filteredData, function(d) { return d.date; }));
-    y.domain([
-        d3.min(filteredData, function(d) { return d.price_usd; }) / 1.005, 
-        d3.max(filteredData, function(d) { return d.price_usd; }) * 1.005
-    ]);
-
-    // Generate axes once scales have been set
-    xAxis.call(xAxisCall.scale(x))
-    yAxis.call(yAxisCall.scale(y))
-
-    // Line path generator
-    var line = d3.line()
-        .x(function (d) { return x(d.date); })
-        .y(function (d) { return y(d.price_usd); });
-
-    // Add line to chart
-    g.append("path")
-        .attr("class", "line")
-        .attr("fill", "none")
-        .attr("stroke", "grey")
-        .attr("stroke-with", "3px")
-        .attr("d", line(filteredData));
-
+    // Initial page load
+    coinData = data;
+    coin = 'bitcoin';
+    metric = 'price_usd';
+    update()
+    
     /******************************** Tooltip Code ********************************/
 
     // var focus = g.append("g")
@@ -164,6 +160,43 @@ d3.json("data/coins.json").then(function(data) {
 });
 
 function update() {
-    
+    // Filter coin
+    let data = coinData[coin]
+
+    // Create transition
+    const t = d3.transition().duration(300);
+
+    // Set scale domains
+    x.domain(d3.extent(data, function(d) { return d.date; }));
+    y.domain([
+        d3.min(data, function(d) { return d[metric]; }) / 1.005, 
+        d3.max(data, function(d) { return d[metric]; }) * 1.005
+    ]);
+
+    // Generate axes
+    xAxis.transition(t)
+        .call(xAxisCall.scale(x));
+    yAxis.transition(t)
+        .call(yAxisCall.scale(y).tickFormat(d => formatAbbreviation(d)));
+
+    // Line path generator
+    var line = d3.line()
+        .x(function (d) { return x(d.date); })
+        .y(function (d) { return y(d[metric]); });
+
+    // Update path definition
+    path.transition(t)
+        .attr("d", line(data));
+
+    // Update yLabel
+    let text = yLabelGenerator(metric);
+    yLabel.text(text);
+
+}
+
+function yLabelGenerator(metric) {
+    return (metric == 'price_usd') ? 'Price (USD)' : 
+        (metric == 'market_cap' ? 'Market Capitalization (USD)' : 
+        '24-Hour Trading Volume (USD)');
 }
 
