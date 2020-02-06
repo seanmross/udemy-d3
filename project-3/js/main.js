@@ -113,7 +113,7 @@ d3.json("data/coins.json").then(function(data) {
         .attr("fill", "none")
         .attr("stroke", "grey")
         .attr("stroke-with", "3px")
-        .attr("d", line(data));
+        .attr("d", line(filteredData));
 
     /******************************** Tooltip Code ********************************/
 
@@ -162,4 +162,8 @@ d3.json("data/coins.json").then(function(data) {
     /******************************** Tooltip Code ********************************/
 
 });
+
+function update() {
+    
+}
 
