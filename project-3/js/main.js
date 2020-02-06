@@ -17,7 +17,7 @@ var g = svg.append("g")
         ", " + margin.top + ")");
 
 // Time parser for x-scale
-var parseTime = d3.timeParse("%Y");
+var parseTime = d3.timeParse("%d/%m/%Y");
 // For tooltip
 var bisectDate = d3.bisector(function(d) { return d.year; }).left;
 
@@ -25,74 +25,95 @@ var bisectDate = d3.bisector(function(d) { return d.year; }).left;
 var x = d3.scaleTime().range([0, width]);
 var y = d3.scaleLinear().range([height, 0]);
 
+// Y-Axis tick format
+var formatSi = d3.format(".2s");
+function formatAbbreviation(x) {
+    var s = formatSi(x);
+    switch (s[s.length - 1]) {
+        case "G": return s.slice(0, -1) + "B";
+        case "k": return s.slice(0, -1) + "K";
+    }
+    return s;
+}
+
 // Axis generators
 var xAxisCall = d3.axisBottom()
+    .ticks(4)
 var yAxisCall = d3.axisLeft()
     .ticks(6)
-    .tickFormat(function(d) { return parseInt(d / 1000) + "k"; });
+    .tickFormat(function(d) { return formatAbbreviation(d); });
 
 // Axis groups
 var xAxis = g.append("g")
-    .attr("class", "x axis")
     .attr("transform", "translate(0," + height + ")");
 var yAxis = g.append("g")
     .attr("class", "y axis")
-    
-// Y-Axis label
-yAxis.append("text")
-    .attr("class", "axis-title")
-    .attr("transform", "rotate(-90)")
-    .attr("y", 6)
-    .attr("dy", ".71em")
-    .style("text-anchor", "end")
-    .attr("fill", "#5D6971")
-    .text("Population)");
 
-// Line path generator
-var line = d3.line()
-    .x(function(d) { return x(d.year); })
-    .y(function(d) { return y(d.value); });
+// Y-Axis label
+let xLabel = g.append("text")
+    .attr('x', width / 2)
+    .attr("y", height + 50)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', '20px')
+    .attr("fill", "#5D6971")
+    .text("Time");
+
+// Y-Axis label
+let yLabel = g.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr('x', -(height / 2))
+    .attr("y", -50)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', '20px')
+    .attr("fill", "#5D6971")
+    .text("Price (USD))");
+
+
+let filteredData = {};
 
 d3.json("data/coins.json").then(function(data) {
     // Data cleaning
-    for (const currency in data) {
-        // Filter null values
-        data[currency] = data[currency].filter(d => {
-            return d['24h_vol'] != null &&
-                d.market_cap != null &&
+    for (let coin in data) {
+        filteredData[coin] = data[coin].filter(d => {
+            return d['24h_vol'] != null && 
+                d.market_cap != null && 
                 d.price_usd != null;
         })
-        // Transform string values
-        data[currency].forEach(d => {
+        filteredData[coin].forEach(d => {
             d['24h_vol'] = +d['24h_vol'];
-            // d.date = parseTime();
+            d.date = parseTime(d.date);
             d.market_cap = +d.market_cap;
             d.price_usd = +d.price_usd; 
         })
     }
 
-    // Data cleaning
-    // data.forEach(function(d) {
-    //     d.year = parseTime(d.year);
-    //     d.value = +d.value;
-    // });
-
+    // Using only Bitcoin data
+    filteredData = filteredData['bitcoin']
+    // console.log(filteredData)
+    
     // Set scale domains
-    // x.domain(d3.extent(data, function(d) { return d.year; }));
-    // y.domain([d3.min(data, function(d) { return d.value; }) / 1.005, 
-    //     d3.max(data, function(d) { return d.value; }) * 1.005]);
+    x.domain(d3.extent(filteredData, function(d) { return d.date; }));
+    y.domain([
+        d3.min(filteredData, function(d) { return d.price_usd; }) / 1.005, 
+        d3.max(filteredData, function(d) { return d.price_usd; }) * 1.005
+    ]);
 
     // Generate axes once scales have been set
-    // xAxis.call(xAxisCall.scale(x))
-    // yAxis.call(yAxisCall.scale(y))
+    xAxis.call(xAxisCall.scale(x))
+    yAxis.call(yAxisCall.scale(y))
+
+    // Line path generator
+    var line = d3.line()
+        .x(function (d) { return x(d.date); })
+        .y(function (d) { return y(d.price_usd); });
 
     // Add line to chart
-    // g.append("path")
-    //     .attr("class", "line")
-    //     .attr("fill", "none")
-    //     .attr("stroke", "grey")
-    //     .attr("stroke-with", "3px")
-    //     .attr("d", line(data));
+    g.append("path")
+        .attr("class", "line")
+        .attr("fill", "none")
+        .attr("stroke", "grey")
+        .attr("stroke-with", "3px")
+        .attr("d", line(data));
 
     /******************************** Tooltip Code ********************************/
 
